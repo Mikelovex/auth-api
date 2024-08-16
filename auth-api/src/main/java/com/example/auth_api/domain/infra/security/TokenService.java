@@ -1,17 +1,19 @@
 package com.example.auth_api.domain.infra.security;
 
-
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.example.auth_api.domain.user.User;
+import com.example.auth_api.domain.entities.Role;
+import com.example.auth_api.domain.entities.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.stream.Collectors;
 
 @Service
 public class TokenService {
@@ -24,9 +26,15 @@ public class TokenService {
         try {
             Algorithm algorithm = Algorithm.HMAC256(tokenSecret);
 
+            var scopes = user.getRoles()
+                    .stream()
+                    .map(Role::getName)
+                    .collect(Collectors.joining(" "));
+
             return JWT.create()
                     .withIssuer("auth-api")
                     .withSubject(user.getEmail())
+                    .withClaim("roles", scopes)
                     .withExpiresAt(this.generateExpirationDate())
                     .sign(algorithm);
 
